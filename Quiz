@@ -1,0 +1,273 @@
+import java.io.*;
+import java.util.*;
+import java.text.SimpleDateFormat;
+/**
+ * Creates, modifies, deletes, grades and stores quizzes. Also stores grades.
+ *
+ * <p>Purdue University -- CS18000 -- Fall 2021</p>
+ *
+ * @author Kriish Rohit, Nihar Atri, Annaahat Lilly, Binghang Lu
+ * @version November 15, 2021
+ */
+
+public class Quiz {
+    private String quizTitle;
+    private ArrayList<Questions> quiz;
+    private ArrayList<String> answers;
+    private String studentAnswers;
+    private ArrayList<Integer> grades;
+    private String randomOption;
+    private Client1 c = new Client1();
+    private static String addQuestionPrompt = "Would you like to add another question to this quiz? (yes or no)%n";
+    private static String quesStatementPrompt = "Enter the question statement:%n";
+    private static String inputAnsPrompt = "Enter the correct answer:%n";
+    private static String incorrectInputAnsPrompt = "Enter an incorrect answer:";
+
+    public Quiz(String quizTitle, ArrayList<Questions> quiz, String randomOption) {
+        this.quiz = quiz;
+        this.quizTitle = quizTitle;
+        this.randomOption = randomOption;
+        grades = new ArrayList<Integer>();
+        answers = new ArrayList<String>();
+    }
+
+    public Quiz(String quizTitle, ArrayList<Questions> quiz) {
+        this.quiz = quiz;
+        this.quizTitle = quizTitle;
+        randomOption = "";
+        grades = new ArrayList<Integer>();
+        answers = new ArrayList<String>();
+    }
+
+    public Quiz() {
+        quizTitle = "";
+        quiz = new ArrayList<Questions>();
+        answers = new ArrayList<String>();
+        studentAnswers = "";
+        randomOption = "";
+        grades = new ArrayList<>();
+    }
+
+    public void createQuiz(Scanner scan) {
+        String addQuestion = "";
+        System.out.println("What is this quiz called?");
+        String quizTitlee = scan.nextLine();
+        c.sendToServer(quizTitlee);
+        do {
+            System.out.println("Do you want to randomize the question and answer order? (yes or no)");
+            randomOption = scan.nextLine();
+            if (randomOption.equals("yes") || randomOption.equals("no")) {
+                break;
+            }
+        } while (true);
+        c.sendToServer(randomOption);
+
+        do {
+            System.out.printf(quesStatementPrompt);
+            String questionStatement = scan.nextLine();
+            c.sendToServer(questionStatement);
+            System.out.printf(inputAnsPrompt);
+            String correctAnswer = scan.nextLine();
+            c.sendToServer(correctAnswer);
+            System.out.println(incorrectInputAnsPrompt);
+            String incorrectChoice1 = scan.nextLine();
+            c.sendToServer(incorrectChoice1);
+            System.out.println(incorrectInputAnsPrompt);
+            String incorrectChoice2 = scan.nextLine();
+            c.sendToServer(incorrectChoice2);
+            System.out.println(incorrectInputAnsPrompt);
+            String incorrectChoice3 = scan.nextLine();
+            c.sendToServer(incorrectChoice3);
+            do {
+                System.out.printf(addQuestionPrompt);
+                addQuestion = scan.nextLine();
+                if (addQuestion.equals("yes")) {
+                    c.sendToServer(addQuestion);
+                    System.out.printf(quesStatementPrompt);
+                    questionStatement = scan.nextLine();
+                    c.sendToServer(questionStatement);
+                    System.out.printf(inputAnsPrompt);
+                    correctAnswer = scan.nextLine();
+                    c.sendToServer(correctAnswer);
+                    System.out.println(incorrectInputAnsPrompt);
+                    incorrectChoice1 = scan.nextLine();
+                    c.sendToServer(incorrectChoice1);
+                    System.out.println(incorrectInputAnsPrompt);
+                    incorrectChoice2 = scan.nextLine();
+                    c.sendToServer(incorrectChoice2);
+                    System.out.println(incorrectInputAnsPrompt);
+                    incorrectChoice3 = scan.nextLine();
+                    c.sendToServer(incorrectChoice3);
+                } else if (addQuestion.equals("no")) {
+                    c.sendToServer(addQuestion);
+                    break;
+                } else {
+                    System.out.println("Please enter a valid option.");
+                }
+            } while (true);
+        } while (addQuestion.equals("yes"));
+    }
+
+    public void viewQuiz(ArrayList<Course> listofcourses, int j, Scanner scan) {
+        int viewResponse = 0;
+        boolean b = true;
+        do {
+            if (listofcourses.get(j).getListofquizzes().size() == 0) {
+                System.out.println("No quizzes have been created.");
+                b = false;
+                break;
+            } else {
+                System.out.println("Which quiz do you want to view?");
+                for (int i = 0; i < listofcourses.get(j).getListofquizzes().size(); i++) {
+                    System.out.println((i + 1) + ". " + listofcourses.get(j).getListofquizzes().get(i));
+                }
+                try {
+                    viewResponse = scan.nextInt() - 1;
+                    scan.nextLine();
+                    if ((viewResponse >= listofcourses.get(j).getListofquizzes().size() || viewResponse < 0)) {
+                        System.out.println("Please enter a valid option.");
+                    } else {
+                        break;
+                    }
+                } catch (InputMismatchException e) {
+                    System.out.println("Please enter a valid number.");
+                    scan.nextLine();
+                }
+            }
+        } while (true);
+        if (b) {
+            System.out.println("Press any button to move to the next question.");
+            for (int i = 0; i < listofcourses.get(j).getListofquizzes().get(viewResponse).getQuiz().size(); i++) {
+                System.out.println("" + (i + 1) +
+                        listofcourses.get(j).getListofquizzes()
+                                .get(viewResponse).getQuiz().get(i).toString(listofcourses.get(j)
+                                        .getListofquizzes().get(viewResponse).getRandomOption()));
+                String moveOn = scan.nextLine();
+            }
+        }
+    }
+
+    public void modifyQuiz(ArrayList<Course> listofcourses, int j, Scanner scan) {//todo
+
+    }
+
+    public void deleteQuiz(ArrayList<Course> listofcourses, int j, Scanner scan) {
+        if (listofcourses.get(j).getListofquizzes().size() == 0) {
+            System.out.println("No quizzes have been created.");
+        } else {
+            System.out.println("Which quiz do you want to delete?");
+            int deleteResponse = 0;
+            for (int i = 0; i < listofcourses.get(j).getListofquizzes().size(); i++) {
+                System.out.println((i + 1) + ". " + listofcourses.get(j).getListofquizzes().get(i));
+            }
+            try {
+                deleteResponse = scan.nextInt() - 1;
+                scan.nextLine();
+                if ((deleteResponse >= listofcourses.get(j).getListofquizzes().size() || deleteResponse < 0)) {
+                    System.out.println("Please enter a valid option.");
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Please enter a valid number.");
+                scan.nextLine();
+            }
+            c.sendToServer(String.valueOf(deleteResponse));
+            System.out.println("Successfully deleted!");
+            System.out.println();
+        }
+    }
+
+    public void viewGrades(Scanner scan, String signinusername, int j, ArrayList<Course> listofcourses) {
+        System.out.println("Please type the name of the quiz grades you want to view.");
+        String quizTitleGrades = scan.nextLine();
+        int storeVariable = 0;
+        for (int i = 0; i < listofcourses.get(j).getListofquizzes().size(); i++) {
+            if (quizTitleGrades.equals(listofcourses.get(j).getListofquizzes().get(i).getQuizTitle())) {
+                storeVariable = i;
+            }
+        }
+        if (quizTitleGrades.equals(listofcourses.get(j).getListofquizzes().get(storeVariable).getQuizTitle())) {
+            try (BufferedReader br = new BufferedReader(new FileReader("src/StudentGrades.txt"))) {
+                int count = 0;
+                int x = 0;
+                while (true) {
+                    String line = br.readLine();
+                    if (line == null) {
+                        break;
+                    }
+                    if (line.equals(quizTitleGrades) && br.readLine().equals(signinusername)) {
+                        String questionStatement = br.readLine();
+                        String answer = br.readLine();
+                        String points = br.readLine();
+                        String cumulativePoints = br.readLine();
+                        br.readLine();
+                        count++;
+                        System.out.println("Question " + questionStatement);
+                        System.out.println(answer);
+                        System.out.println("Points: " + points);
+                        System.out.println("Total score: " + cumulativePoints);
+                        System.out.println();
+                        x = 1;
+                    }
+                }
+                if (x == 0) {
+                    System.out.println("No grades are available.");
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("This quiz doesn't exist in this course.");
+        }
+
+
+    }
+
+    public ArrayList<String> getAnswers() {
+        return answers;
+    }
+
+    public ArrayList<Questions> getQuiz() {
+        return quiz;
+    }
+
+    public String getRandomOption() {
+        return randomOption;
+    }
+
+
+    public String getQuizTitle() {
+        return quizTitle;
+    }
+
+    public void submitQuiz(ArrayList<String> submissions, String signinusername,
+                           int takeResponse, String courseName, String quizTitlee,
+                           int j, ArrayList<Course> listofcourses) //todo
+    // once submitted, reads from answers text file
+    // and adds to answers AL
+    {
+        SimpleDateFormat date = new SimpleDateFormat("HH:mm:ss");
+        String timeStamp = date.format(new Date());
+        System.out.println("Submitted at " + timeStamp);
+        //writeSubmissions(submissions, courseName, quizTitlee, signinusername, takeResponse, j, listofcourses);
+        listofcourses.get(j).getListofquizzes().get(takeResponse).getAnswers().clear();
+    }
+
+    public String formatQuiz(Quiz q, int i) {
+        return q.getQuizTitle() + "\n" + q.getQuiz().get(i);
+    }
+
+    public String getStudentAnswers() {
+        return studentAnswers;
+    }
+
+
+    //for the teacher to view submissions
+    //coursename, quiztitle, username, question statement, answer
+
+    @Override
+    public String toString() {
+        return quizTitle;
+    }
+}
