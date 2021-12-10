@@ -1,0 +1,195 @@
+import java.net.ServerSocket;
+import java.util.*;
+import java.io.*;
+/**
+ * Creates, modifies, and deletes accounts and stores them in a text file.
+ *
+ * <p>Purdue University -- CS18000 -- Fall 2021</p>
+ *
+ * @author Kriish Rohit, Nihar Atri, Annaahat Lilly, Binghang Lu
+ * @version November 15, 2021
+ */
+
+public class Account {
+    private String username;
+    private String password;
+    private int age;
+    private String name;
+    private String role;
+    private Client1 c = new Client1();
+
+    public Account(String name, String role, int age, String username, String password) {
+        this.username = username;
+        this.password = password;
+        this.age = age;
+        this.name = name;
+        this.role = role;
+    }
+
+    public Account() {
+        this.username = "";
+        this.password = "";
+        this.age = 0;
+        this.name = "";
+        this.role = "";
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public void createAccount(ArrayList<Account> database, Scanner scan) {
+        //test age as a string & negative number
+        //test role as not student or teacher
+        //test input username already existing in AL
+        System.out.println("Please enter your information to create an account.");
+        System.out.print("Name: ");
+        name = scan.nextLine();
+        c.sendToServer(name);
+        do {
+            System.out.print("Role: ");
+            role = scan.nextLine().toLowerCase();
+            if (!role.equals("student") && !role.equals("teacher")) {
+                System.out.println("Please enter a valid role.");
+            }
+        }
+        while (!role.equals("student") && !role.equals("teacher"));
+        c.sendToServer(role);
+        while (true) {
+            try {
+                System.out.print("Age: ");
+                age = scan.nextInt();
+                scan.nextLine();
+
+                while (age < 0) {
+                    System.out.println("Please enter a valid age.");
+                    System.out.print("Age: ");
+                    age = scan.nextInt();
+                    scan.nextLine();
+                }
+                break;
+            } catch (InputMismatchException e) {
+                System.out.println("Please enter a number.");
+                scan.nextLine();
+                continue;
+            }
+        }
+        c.sendToServer(String.valueOf(age));
+        boolean exists;
+        do {
+            System.out.println("Username: ");
+            username = scan.nextLine();
+            if (usernameAlreadyExists(database, username)) {
+                System.out.println("Sorry, this username already exists.");
+                exists = true;
+            } else {
+                exists = false;
+            }
+        } while (exists);
+        c.sendToServer(username);
+        System.out.println("Password: ");
+        password = scan.nextLine();
+        c.sendToServer(password);
+        System.out.println("Thank you for signing up!");
+        System.out.println();
+    }
+
+    public void modifyAccount(String signinusername, String signinpassword, Scanner scan) {
+        //test age as a string & negative number
+        //test role as not student or teacher
+        //test input username already existing in AL
+
+        c.sendToServer(signinusername);
+        c.sendToServer(signinpassword);
+        System.out.println("Please enter your new information.");
+        System.out.println("Name: ");
+        name = scan.nextLine();
+        c.sendToServer(name);
+        int b = 0;
+        while (b == 0) {
+            try {
+                do {
+                    System.out.print("Age: ");
+                    age = scan.nextInt();
+                    scan.nextLine();
+                    if (age < 0) {
+                        System.out.println("Please enter a valid age.");
+                    }
+                } while (age < 0);
+                b = 1;
+            } catch (InputMismatchException e) {
+                System.out.println("Please enter a number.");
+                scan.nextLine();
+            }
+        }
+        c.sendToServer(String.valueOf(age));
+        boolean exists;
+        System.out.println("Password: ");
+        password = scan.nextLine();
+        c.sendToServer(password);
+        System.out.println("Your changes have been saved!");
+    }
+
+    public void deleteAccount(String signinusername, String signinpassword) {
+        //test if account doesn't exist
+        //flush username and password to server, then delete from AL
+        c.sendToServer(signinusername);
+        c.sendToServer(signinpassword);
+    }
+    public boolean usernameAlreadyExists(ArrayList<Account> database, String usernamee) {
+        for (int i = 0; i < database.size(); i++) {
+            if (Objects.equals(usernamee, database.get(i).getUsername())) {
+                return true;
+            }
+        }
+        return false;
+
+    }
+
+
+    public String toString() {
+        return "{username='11111" + username + '\'' +
+                ", password='22222" + password + '\'' +
+                ", age='33333" + age + '\''
+                + ", name='44444" + name + '\'' +
+                ", role='55555" + role + '\'' +
+                '}';
+    }
+
+}
