@@ -1,0 +1,575 @@
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Objects;
+import java.util.Scanner;
+
+public class Server1 {
+    private Scanner scan = new Scanner(System.in);
+    private Course c = new Course();
+    private Quiz q = new Quiz();
+    private NetworkMethods n = new NetworkMethods();
+    private ArrayList<Account> database = new ArrayList<>();
+    private ArrayList<Quiz> listofquizzes = new ArrayList<>();
+    private ArrayList<Questions> quiz = new ArrayList<>();
+    private ArrayList<Course> listofcourses = new ArrayList<Course>();
+    private ArrayList<String> submissions = new ArrayList<>();
+    private ArrayList<String> listofuserstakenaquiz = new ArrayList<>();
+    private ArrayList<String> gradingMenu = new ArrayList<>();
+
+    public Course getC() {
+        return c;
+    }
+
+    public void setC(Course c) {
+        this.c = c;
+    }
+/*
+    public Account getA() {
+        return a;
+    }
+
+    public void setA(Account a) {
+        this.a = a;
+    }
+
+
+ */
+    public Quiz getQ() {
+        return q;
+    }
+
+    public void setQ(Quiz q) {
+        this.q = q;
+    }
+
+    public ArrayList<Account> getDatabase() {
+        return database;
+    }
+
+    public void setDatabase(ArrayList<Account> database) {
+        this.database = database;
+    }
+
+    public ArrayList<Quiz> getListofquizzes() {
+        return listofquizzes;
+    }
+
+    public void setListofquizzes(ArrayList<Quiz> listofquizzes) {
+        this.listofquizzes = listofquizzes;
+    }
+
+    public ArrayList<Questions> getQuiz() {
+        return quiz;
+    }
+
+    public void setQuiz(ArrayList<Questions> quiz) {
+        this.quiz = quiz;
+    }
+
+    public ArrayList<Course> getListofcourses() {
+        return listofcourses;
+    }
+
+    public void setListofcourses(ArrayList<Course> listofcourses) {
+        this.listofcourses = listofcourses;
+    }
+
+    public ArrayList<String> getSubmissions() {
+        return submissions;
+    }
+
+    public void setSubmissions(ArrayList<String> submissions) {
+        this.submissions = submissions;
+    }
+
+    public ArrayList<String> getListofuserstakenaquiz() {
+        return listofuserstakenaquiz;
+    }
+
+    public void setListofuserstakenaquiz(ArrayList<String> listofuserstakenaquiz) {
+        this.listofuserstakenaquiz = listofuserstakenaquiz;
+    }
+
+    public ArrayList<String> getGradingMenu() {
+        return gradingMenu;
+    }
+
+    public void setGradingMenu(ArrayList<String> gradingMenu) {
+        this.gradingMenu = gradingMenu;
+    }
+
+    public boolean isInvalidAccount(String usernamee, String passwordd) {
+
+        for (int i = 0; i < database.size(); i++) {
+            if (Objects.equals(usernamee, database.get(i).getUsername())) {
+                if (Objects.equals(passwordd, database.get(i).getPassword())) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+    public boolean isStudent(String signinusername, String signinpassword) {
+        for (int i = 0; i < database.size(); i++) {
+            if (database.get(i).getUsername()
+                    .equals(signinusername)
+                    && database.get(i).getPassword()
+                    .equals(signinpassword)) {
+                if (database.get(i).getRole().equals("student")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    public boolean usernameAlreadyExists(String usernamee) {
+        for (int i = 0; i < database.size(); i++) {
+            if (Objects.equals(usernamee, database.get(i).getUsername())) {
+                return true;
+            }
+        }
+        return false;
+
+    }
+    public void refresh(){
+        //converting data in file to accounts arraylist
+        readFromFileAccount();
+        //converting data in file to courses arraylist
+        readFromFileCourse();
+        readSubmissions();
+        //reads from Submissions file back into
+        readGradesToFile();
+    }
+
+    public void createAccountInServer(ServerSocket ss) {
+        String a = n.receiveFromClient(ss);
+        System.out.println(a);
+        String b = n.receiveFromClient(ss);
+        System.out.println(b);
+        int c = Integer.parseInt(n.receiveFromClient(ss));
+        System.out.println(c);
+        String d = n.receiveFromClient(ss);
+        System.out.println(d);
+        String e = n.receiveFromClient(ss);
+        System.out.println(e);
+        Account account = new Account(a,b,c,d,e);
+        database.add(account);
+        writeToFileAccount();
+    }
+
+    public void modifyAccountInServer(ServerSocket ss) {
+        int j = 0;
+        String signinusername = n.receiveFromClient(ss);
+        String signinpassword = n.receiveFromClient(ss);
+        for (int i = 0; i < database.size(); i++) {
+            if (signinusername.equals(database
+                    .get(i).getUsername())
+                    && (signinpassword.equals(database
+                    .get(i).getPassword()))) {
+                    j = i;
+                }
+            }
+        database.get(j).setName(n.receiveFromClient(ss));
+        System.out.println(database.get(j).getName());
+        database.get(j).setAge(Integer.parseInt(n.receiveFromClient(ss)));
+        System.out.println(database.get(j).getAge());
+        database.get(j).setPassword(n.receiveFromClient(ss));
+        System.out.println(database.get(j).getPassword());
+        writeToFileAccount();
+    }
+
+    public void deleteAccountInServer(ServerSocket ss) {
+        int j = 0;
+        int i;
+        String signinusername = n.receiveFromClient(ss);
+        String signinpassword = n.receiveFromClient(ss);
+
+        for (i = 0; i < database.size(); i++) {
+            if (signinusername.equals(database
+                    .get(i).getUsername())
+                    && signinpassword.equals(database.get(i)
+                    .getPassword())) {
+                j = i;
+                database.remove(j);
+                System.out.println("The account has been successfully removed!");
+                break;
+            }
+        }
+        if (j != i) {
+            System.out.println("This account does not exist.");
+        }
+        writeToFileAccount();
+    }
+
+    public void createCourseInServer(ServerSocket ss) {
+        String courseName = n.receiveFromClient(ss);
+        Course course = new Course(courseName);
+        listofcourses.add(course);
+        writeToFileCourse();
+    }
+
+    public void addAnswerToQuiz(int j,int takeResponse, ServerSocket ss){
+        String answer = n.receiveFromClient(ss);
+        listofcourses.get(j).getListofquizzes().get(takeResponse).getAnswers().add(answer);
+    }
+
+    public void createQuizInServer(ServerSocket ss, Course course) {
+        ArrayList<Questions> quizz = new ArrayList<>();
+        String addQuestion ="";
+        String quizTitlee = n.receiveFromClient(ss);
+        String randomOption = n.receiveFromClient(ss);
+        String questionStatement = n.receiveFromClient(ss);
+        String correctAnswer = n.receiveFromClient(ss);
+        String incorrectChoice1 = n.receiveFromClient(ss);
+        String incorrectChoice2 = n.receiveFromClient(ss);
+        String incorrectChoice3 = n.receiveFromClient(ss);
+        Questions question = new Questions(questionStatement + "?",
+                correctAnswer, incorrectChoice1, incorrectChoice2,
+                incorrectChoice3);
+        quizz.add(question);
+        do{
+            addQuestion = n.receiveFromClient(ss);
+            if (addQuestion.equals("yes")) {
+                questionStatement = n.receiveFromClient(ss);
+                correctAnswer = n.receiveFromClient(ss);
+                incorrectChoice1 = n.receiveFromClient(ss);
+                incorrectChoice2 = n.receiveFromClient(ss);
+                incorrectChoice3 = n.receiveFromClient(ss);
+                Questions questionn = new Questions(questionStatement + "?",
+                        correctAnswer, incorrectChoice1, incorrectChoice2,
+                        incorrectChoice3);
+                quizz.add(questionn);
+            } else if (addQuestion.equals("no")) {
+                Quiz onequiz = new Quiz(quizTitlee, quizz, randomOption);
+                course.setListofquizzes(onequiz);
+                break;
+            }
+        }while(addQuestion.equals("yes"));
+        writeToFileCourse();
+    }
+
+    public void addAQuestionInServer(ServerSocket ss, int j, int modifyResponse){
+        String questionStatement = n.receiveFromClient(ss);
+        String correctAnswer = n.receiveFromClient(ss);
+        String incorrectChoice1 = n.receiveFromClient(ss);
+        String incorrectChoice2 = n.receiveFromClient(ss);
+        String incorrectChoice3 = n.receiveFromClient(ss);
+        Questions question = new Questions(questionStatement + "?",
+                correctAnswer, incorrectChoice1, incorrectChoice2,
+                incorrectChoice3);
+        listofcourses.get(j).getListofquizzes().get(modifyResponse).getQuiz().add(question);
+        writeToFileCourse();
+    }
+
+    public void changeAQuestionInServer(ServerSocket ss, int j, int modifyResponse, int questionNumber){
+        String questionStatement = n.receiveFromClient(ss);
+        String correctAnswer = n.receiveFromClient(ss);
+        String incorrectChoice1 = n.receiveFromClient(ss);
+        String incorrectChoice2 = n.receiveFromClient(ss);
+        String incorrectChoice3 = n.receiveFromClient(ss);
+        Questions question = new Questions(questionStatement + "?",
+                correctAnswer, incorrectChoice1,
+                incorrectChoice2, incorrectChoice3);
+        listofcourses.get(j).getListofquizzes()
+                .get(modifyResponse).getQuiz()
+                .set(questionNumber, question);
+        writeToFileCourse();
+    }
+
+    public void deleteAQuestionInServer(ServerSocket ss, int j, int modifyResponse){
+        int questionNumber = Integer.parseInt(n.receiveFromClient(ss));
+        listofcourses.get(j).getListofquizzes()
+                .get(modifyResponse).getQuiz().remove(questionNumber);
+        writeToFileCourse();
+    }
+
+    public void deleteAQuizInServer(ServerSocket ss, int j){
+        int deleteResponse = Integer.parseInt(n.receiveFromClient(ss));
+        listofcourses.get(j).getListofquizzes().remove(deleteResponse);
+        writeToFileCourse();
+
+    }
+
+    public void gradeQuizInServer(ServerSocket ss){
+        String gradedQuestion = n.receiveFromClient(ss);
+        System.out.println(gradedQuestion);
+        String gradedQuestion2 = n.receiveFromClient(ss);
+        System.out.println(gradedQuestion2);
+        String gradedQuestion3 = n.receiveFromClient(ss);
+        String gradedQuestion4 = n.receiveFromClient(ss);
+        String gradedQuestion5 = n.receiveFromClient(ss);
+        String gradedQuestion6 = n.receiveFromClient(ss);
+        System.out.println("receiving?");
+        gradedQuestion+="\n"+gradedQuestion2+"\n"+gradedQuestion3+"\n"+gradedQuestion4+"\n"+gradedQuestion5+"\n"+gradedQuestion6;
+        gradingMenu.add(gradedQuestion);
+        System.out.println("before");
+        writeGradesToFile();
+        System.out.println("after");
+    }
+
+    public void clearListOfUsers(){
+        listofuserstakenaquiz.clear();
+    }
+
+    public void submitQuiz(String signinusername,
+                           int takeResponse, String courseName, String quizTitlee, int j) {
+        SimpleDateFormat date = new SimpleDateFormat("HH:mm:ss");
+        String timeStamp = date.format(new Date());
+        System.out.println("Submitted at " + timeStamp);
+        writeSubmissions(courseName, quizTitlee, signinusername, takeResponse, j);
+        System.out.println(listofcourses.get(j).getListofquizzes().get(takeResponse).getAnswers());
+        listofcourses.get(j).getListofquizzes().get(takeResponse).getAnswers().clear();
+    }
+
+    //writing to txt files
+    public void writeToFileAccount() {
+        //print out account
+        try (PrintWriter pw = new PrintWriter(new FileWriter("src/UserInformation.txt", false))) {
+            for (int i = 0; i < database.size(); i++) {
+                pw.println(database.get(i));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void writeGradesToFile() {
+        try (PrintWriter pw = new PrintWriter(new FileWriter("src/StudentGrades.txt", false))) {
+            for (int i = 0; i < gradingMenu.size(); i++) {
+                pw.println(gradingMenu.get(i));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void writeToFileCourse() {
+        //print out everything
+        try (PrintWriter pw = new PrintWriter(new FileWriter("src/Courses.txt", false))) {
+            for (int i = 0; i < listofcourses.size(); i++) {
+                pw.println(listofcourses.get(i).getCourseName());
+                for (int k = 0; k < listofcourses.get(i).getListofquizzes().size(); k++) {
+                    pw.println(listofcourses.get(i).getListofquizzes().get(k).getQuizTitle());
+                    for (int l = 0; l < listofcourses.get(i).getListofquizzes().get(k).getQuiz().size(); l++) {
+                        pw.println(listofcourses.get(i).getListofquizzes()
+                                .get(k).getQuiz().get(l)
+                                .generateQuestionFormat());
+                    }
+                    pw.println("ENDOFQUIZ");
+                }
+                pw.println("ENDOFCOURSE");
+
+            }
+            pw.println("ENDOFINFORMATION");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void writeSubmissions(String courseName,
+                                 String quizTitlee, String signinusername, int takeResponse,
+                                 int j) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter("src/Submissions.txt", false))) {
+            String submission = "";
+            submission = courseName + "111" + quizTitlee + "223" + signinusername + "333";
+            for (int i = 0; i < listofcourses.get(j).getListofquizzes().get(takeResponse).getAnswers().size(); i++) {
+                submission += "$" + listofcourses.get(j).getListofquizzes().get(takeResponse)
+                        .getQuiz().get(i).getQuestionStatement() +
+                        listofcourses.get(j).getListofquizzes()
+                                .get(takeResponse).getAnswers().get(i)
+                        + ("" + (i + 4) + (i + 4) + (i + 4));
+                if (i == listofcourses.get(j).getListofquizzes().get(takeResponse).getAnswers().size() - 1) {
+                    submission += "$";
+                }
+            }
+            submissions.add(submission);
+
+            for (int i = 0; i < submissions.size(); i++) {
+                for (int k = i + 1; k < submissions.size(); k++) {
+                    if (submissions.get(i).substring(0,
+                                    submissions.get(i).indexOf("$"))
+                            .equals(submissions.get(k).substring(0,
+                                    submissions.get(k).indexOf("$")))) {
+                        submissions.remove(i);
+                        k = i + 1;
+                    }
+                }
+                pw.println(submissions.get(i));
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+ //reading from txt files
+ public void readFromFileAccount() {
+     try (BufferedReader br = new BufferedReader(new FileReader("src/UserInformation.txt"))) {
+         String line = br.readLine();
+         String namee;
+         String rolee;
+         String usernamee;
+         String passwordd;
+         int agee;
+         while (line != null) {
+             usernamee = line.substring(line.indexOf("11111") + 5,
+                     line.indexOf("'",
+                             line.indexOf("11111") + 5));
+             passwordd = line.substring(line.indexOf("22222") + 5,
+                     line.indexOf("'",
+                             line.indexOf("22222") + 5));
+             agee = Integer.valueOf(line
+                     .substring(line.indexOf("33333") + 5,
+                             line.indexOf("'",
+                                     line.indexOf("33333") + 5)));
+             namee = line.substring(line.indexOf("44444") + 5,
+                     line.indexOf("'",
+                             line.indexOf("44444") + 5));
+             rolee = line.substring(line.indexOf("55555") + 5,
+                     line.indexOf("'",
+                             line.indexOf("55555") + 5));
+             Account a = new Account(namee, rolee, agee, usernamee, passwordd);
+             database.add(a);
+             line = br.readLine();
+         }
+     } catch (FileNotFoundException e) {
+         e.printStackTrace();
+     } catch (IOException e) {
+         e.printStackTrace();
+     }
+ }
+
+    //compares inputted quiz title to quiz titles in txt file
+    //get all users who have taken that quiz
+    //grading – print out specific students question statement and answer
+    //teacher enters 0 or 1 - adds to counter - saves question statement(AL),
+    // student's answer(AL), 0 or 1(AL), and
+    // final score(print out at end) to text file
+    //student views grades - parse through txt file,
+    // add each AL.get(i) to index value of new AL, print out final score at end
+
+    public void readGradesToFile() {
+        try (BufferedReader br = new BufferedReader(new FileReader("src/StudentGrades.txt"))) {
+            String test = br.readLine();
+            if (test == null) {
+                return;
+            } else {
+                String line = test + "\n" + br.readLine() + "\n" +
+                        br.readLine() + "\n" + br.readLine() + "\n" +
+                        br.readLine() + "\n" + br.readLine();
+                gradingMenu.add(line);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void readFromFileCourse() {
+        try (BufferedReader br = new BufferedReader(new FileReader("src/Courses.txt"))) {
+            while (true) {
+                Course c = new Course();
+
+                String test1 = br.readLine();
+                if (test1 == null) {
+                    break;
+                }
+                if (test1.equals("ENDOFINFORMATION")) {
+                    break;
+                }
+                String courseNamee;
+                courseNamee = test1;
+                while (true) {
+                    Quiz q = new Quiz();
+                    String test2 = br.readLine();
+                    if (test2.equals("ENDOFCOURSE")) {
+                        break;
+                    }
+                    String quizTitle;
+                    quizTitle = test2;
+                    while (true) {
+                        String test3 = br.readLine();
+                        if (test3.equals("ENDOFQUIZ")) {
+                            break;
+                        } else {
+                            String tempStatement = test3;
+                            String questionStatement = tempStatement.substring(tempStatement.indexOf(" "));
+                            String correctAnswerTemp = br.readLine();
+                            String correctAnswer = correctAnswerTemp.substring(correctAnswerTemp.indexOf(" "));
+                            String incorrectAnswerTemp1 = br.readLine();
+                            String incorrectAnswer1 = incorrectAnswerTemp1.substring(incorrectAnswerTemp1.indexOf(" "));
+                            String incorrectAnswerTemp2 = br.readLine();
+                            String incorrectAnswer2 = incorrectAnswerTemp2.substring(incorrectAnswerTemp2.indexOf(" "));
+                            String incorrectAnswerTemp3 = br.readLine();
+                            String incorrectAnswer3 = incorrectAnswerTemp3.substring(incorrectAnswerTemp3.indexOf(" "));
+                            Questions question = new Questions(questionStatement, correctAnswer,
+                                    incorrectAnswer1, incorrectAnswer2, incorrectAnswer3);
+                            q.getQuiz().add(question);
+                        }
+                    }
+                    q = new Quiz(quizTitle, q.getQuiz());
+                    c.getListofquizzes().add(q);
+                }
+                c = new Course(courseNamee, c.getListofquizzes());
+                listofcourses.add(c);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void readSubmissions() {
+        try (BufferedReader br = new BufferedReader(new FileReader("src/Submissions.txt"))) {
+            while (true) {
+                String line = br.readLine();
+                if (line == null) {
+                    break;
+                } else {
+                    submissions.add(line);
+                }
+            }
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+
+        Scanner scan = new Scanner(System.in);
+        Course c = new Course();
+        Account a = new Account();
+        Quiz q = new Quiz();
+        ArrayList<Account> database = new ArrayList<>();
+        ArrayList<Quiz> listofquizzes = new ArrayList<>();
+        ArrayList<Questions> quiz = new ArrayList<>();
+        ArrayList<Course> listofcourses = new ArrayList<Course>();
+        ArrayList<String> submissions = new ArrayList<>();
+        ArrayList<String> listofuserstakenaquiz = new ArrayList<>();
+        ArrayList<String> gradingMenu = new ArrayList<>();
+
+
+        //Establishing connection between server and client
+        ServerSocket serverSocket = new ServerSocket(4242);
+        System.out.println("Waiting for the client to connect...");
+        Socket socket = serverSocket.accept();
+        System.out.println("Client connected!");
+        BufferedReader bfr = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        PrintWriter pw = new PrintWriter(socket.getOutputStream());
+
+        int x = 0;
+        int y = 0;
+
+        while(true) {
+
+        }
+    }
+}
