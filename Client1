@@ -1,0 +1,710 @@
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.InputMismatchException;
+import java.util.Scanner;
+
+
+// a.readFromFileAccount(s.getDatabase());
+// writing to text file gets duplicated since methods add accounts and refresh also adds
+//have home button that goes to choose course menu, change implementation
+public class Client1 {
+    //methods
+    public static ServerSocket openServerSocketInClient() { //need to delete
+        ServerSocket ss = null;
+        try {
+            ss = new ServerSocket(4242);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return ss;
+    }
+
+    public static void closeServerSocketInClient(ServerSocket ss) {//need to delete
+        try {
+            ss.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendToServer(String line) {//need to delete
+        Socket socket = new Socket();
+        try {
+            socket = new Socket("localhost", 4242);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        PrintWriter pw = null;
+        try {
+            pw = new PrintWriter(socket.getOutputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        pw.println(line);
+        pw.flush();
+        try {
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void sendToServerFromClient(String line) {//need to delete
+        Socket socket = null;
+        PrintWriter pw = null;
+        try {
+            socket = new Socket("localhost", 4242);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            pw = new PrintWriter(socket.getOutputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        pw.println(line);
+        pw.flush();
+        try {
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner scan = new Scanner(System.in);
+        Server1 s = new Server1();
+        Account a = new Account();
+        Course c = new Course();
+        Quiz q = new Quiz();
+        String answermainmenu;
+        s.refresh();
+
+        System.out.println("Welcome to our quiz management tool!");
+        while (true) {
+            System.out.println("What do you want to do?\nSign in (1)\nCreate an account (2)\nQuit (3)");
+            answermainmenu = scan.nextLine();
+            if (answermainmenu.equals("1")) {
+                int x = 0;
+                int y = 0;
+                do {
+                    System.out.println("Please enter your username and password:");
+                    System.out.print("Username: ");
+                    String signinusername = scan.nextLine();
+                    System.out.print("Password: ");
+                    String signinpassword = scan.nextLine();
+                    if (s.isInvalidAccount(signinusername, signinpassword)) {
+                        System.out.println("This account does not exist.");
+                        System.out.println("Do you want to try signing in again? (yes or no)");
+                        String answersignin = scan.nextLine();
+                        if (answersignin.equals("no")) {
+                            x = 1;
+                        }
+                    } else {
+                        //determining whether account is student or teacher
+                        System.out.println();
+                        System.out.println("Successfully logged in!");
+                        System.out.println();
+                        if (s.isStudent(signinusername, signinpassword)) {
+                            String studentchoice;
+                            String studentaccountchoice;
+                            do {
+                                //what student sees
+                                System.out.println("What do you want to do?");
+                                System.out.println("View all courses (1)");
+                                System.out.println("View account settings (2)");
+                                studentchoice = scan.nextLine();
+                                if (studentchoice.equals("1")) {
+                                    int j = 0;
+                                    int b = 0;
+                                    int response;
+                                    String quizTitle = "";
+                                    do {
+                                        if (s.getListofcourses().size() == 0) {
+                                            System.out.println("No courses exist.");
+                                            b = 1;
+                                            break;
+                                        } else {
+                                            System.out.println("Choose a course:");
+                                            for (int i = 0; i < s.getListofcourses().size(); i++) {
+                                                System.out.println((i + 1) + ". " +
+                                                        s.getListofcourses().get(i).getCourseName());
+                                            }
+                                            try {
+                                                response = scan.nextInt() - 1;
+                                                scan.nextLine();
+                                                if ((response >= s.getListofcourses().size() || response < 0)) {
+                                                    System.out.println("Please enter a valid option.");
+                                                } else {
+                                                    for (int i = 0; i < s.getListofcourses().size(); i++) {
+                                                        if (s.getListofcourses().get(i).getCourseName()
+                                                                .equals(s.getListofcourses().get(response)
+                                                                        .getCourseName())) {
+                                                            j = i;
+                                                        }
+                                                    }
+                                                    break;
+                                                }
+                                            } catch (InputMismatchException e) {
+                                                System.out.println("Please enter a valid number.");
+                                                scan.nextLine();
+                                            }
+                                        }
+                                    } while (true);
+                                    if (b == 0) {
+                                        do {
+                                            System.out.println("What do you want to do?");
+                                            System.out.println("Take a quiz (1)");
+                                            System.out.println("View quiz grades (2)");
+                                            System.out.println("Go back (3)");
+                                            String quizResponse = scan.nextLine();
+                                            if (quizResponse.equals("1")) {
+
+                                                //getting specific quiz
+                                                int takeResponse = 0;
+                                                boolean z = true;
+                                                do {
+                                                    if (s.getListofcourses().get(j).getListofquizzes().size() == 0) {
+                                                        System.out.println("No quizzes have been created.");
+                                                        z = false;
+                                                        break;
+                                                    } else {
+                                                        System.out.println("Which quiz do you want to take?");
+                                                        for (int i = 0; i < s.getListofcourses().get(j)
+                                                                .getListofquizzes().size(); i++) {
+                                                            System.out.println((i + 1) + ". " +
+                                                                    s.getListofcourses().get(j).getListofquizzes().get(i));
+                                                        }
+                                                        try {
+                                                            takeResponse = scan.nextInt() - 1;
+                                                            scan.nextLine();
+                                                            if ((takeResponse >= s.getListofcourses().get(j)
+                                                                    .getListofquizzes().size()
+                                                                    || takeResponse < 0)) {
+                                                                System.out.println("Please enter a valid option.");
+                                                            } else {
+                                                                break;
+                                                            }
+                                                        } catch (InputMismatchException e) {
+                                                            System.out.println("Please enter a valid number.");
+                                                            scan.nextLine();
+                                                        }
+                                                    }
+                                                } while (true);
+
+                                                //taking the quiz
+                                                if (z) {
+                                                    if (s.getListofcourses().get(j).getListofquizzes().get(takeResponse).getRandomOption().equals("yes")) {
+                                                        Collections.shuffle(s.getListofcourses().get(j).getListofquizzes().get(takeResponse).getQuiz());
+                                                    }
+                                                    System.out.println();
+                                                    for (int i = 0; i < s.getListofcourses().get(j).getListofquizzes().get(takeResponse).getQuiz().size(); i++) {
+                                                        System.out.println("" + (i + 1) +
+                                                                s.getListofcourses().get(j).getListofquizzes().get(takeResponse)
+                                                                        .getQuiz().get(i).toString(s.getListofcourses().get(j)
+                                                                                .getListofquizzes().get(takeResponse).getRandomOption()));
+                                                        String answer = scan.nextLine();
+                                                        ServerSocket ss = openServerSocketInClient();
+                                                        sendToServerFromClient(answer);
+                                                        s.addAnswerToQuiz(j,takeResponse,ss);
+                                                        closeServerSocketInClient(ss);
+                                                    }
+
+                                                    do {
+                                                        System.out.println("Enter submit to submit the quiz.");
+                                                        String submit = scan.nextLine().toLowerCase();
+                                                        if (submit.equals("submit")) {
+                                                            s.submitQuiz(signinusername, takeResponse,
+                                                                    s.getListofcourses().get(j).getCourseName(),
+                                                                    s.getListofcourses().get(j).getListofquizzes()
+                                                                            .get(takeResponse).getQuizTitle(), j);
+                                                            break;
+                                                        } else {
+                                                            System.out.println("Please enter a valid option.");
+                                                        }
+                                                    } while (true);
+                                                }
+
+                                            } else if (quizResponse.equals("2")) {
+                                                q.viewGrades(scan, signinusername, j, s.getListofcourses());
+                                            } else if (quizResponse.equals("3")) {
+                                                break;
+                                            } else {
+                                                System.out.println("Please enter a valid option.");
+                                            }
+                                        } while (true);
+                                    }
+                                    } else if (studentchoice.equals("2")) {
+                                        do {
+                                            System.out.println("Account Settings:");
+                                            System.out.println("Modify account (1)");
+                                            System.out.println("Delete account (2)");
+                                            System.out.println("Log out (3)");
+                                            System.out.println("Go back (4)");
+                                            studentaccountchoice = scan.nextLine();
+                                            if (studentaccountchoice.equals("1")) {
+                                                System.out.println();
+                                                ServerSocket ss = openServerSocketInClient();
+                                                a.modifyAccount(signinusername, signinpassword, scan);
+                                                s.modifyAccountInServer(ss);
+                                                closeServerSocketInClient(ss);
+                                                System.out.println();
+                                                System.out.println("You have been logged out of your old account.");
+                                                System.out.println();
+                                                x = 1;
+                                                y = 1;
+                                                break;
+                                            } else if (studentaccountchoice.equals("2")) {
+                                                ServerSocket ss = openServerSocketInClient(); //open new ServerSocket
+                                                a.deleteAccount(signinusername, signinpassword);
+                                                s.deleteAccountInServer(ss);
+                                                closeServerSocketInClient(ss); //close ServerSocket
+                                                System.out.println();
+                                                System.out.println("You have been logged out.");
+                                                System.out.println();
+                                                x = 1;
+                                                y = 1;
+                                                break;
+                                            } else if (studentaccountchoice.equals("3")) {
+                                                System.out.println();
+                                                System.out.println("You have been logged out.");
+                                                System.out.println();
+                                                x = 1;
+                                                y = 1;
+                                                break;
+                                            } else if (studentaccountchoice.equals("4")) {
+                                                break;
+                                            } else {
+                                                System.out.println("Please enter a valid choice.");
+                                            }
+                                        } while (true);
+                                    } else {
+                                        System.out.println("Please enter a valid choice.");
+                                    }
+                                }
+                                while (y == 0) ;
+
+                            } else{
+                                String teacherchoice;
+                                String teacheraccountchoice;
+                                do {
+                                    //what teacher sees
+                                    System.out.println("What do you want to do?");
+                                    System.out.println("Create a course (1)");
+                                    System.out.println("View all courses (2)");
+                                    System.out.println("View account settings (3)");
+
+                                    teacherchoice = scan.nextLine();
+                                    if (teacherchoice.equals("1")) {
+                                        ServerSocket ss = openServerSocketInClient(); //open new ServerSocket
+                                        c.createCourse(scan);
+                                        s.createCourseInServer(ss);
+                                        closeServerSocketInClient(ss); //close ServerSocket
+                                    } else if (teacherchoice.equals("2")) {
+                                        int j = 0;
+                                        int b = 0;
+                                        int response;
+                                        String quizTitle = "";
+                                        do {
+                                            if (s.getListofcourses().size() == 0) {
+                                                System.out.println("No courses exist.");
+                                                b = 1;
+                                                break;
+                                            } else {
+                                                System.out.println("Choose a course:");
+                                                for (int i = 0; i < s.getListofcourses().size(); i++) {
+                                                    System.out.println((i + 1) + ". "
+                                                            + s.getListofcourses().get(i).getCourseName());
+                                                }
+                                                try {
+                                                    response = scan.nextInt() - 1;
+                                                    scan.nextLine();
+                                                    if ((response >= s.getListofcourses().size() || response < 0)) {
+                                                        System.out.println("Please enter a valid option.");
+                                                    } else {
+                                                        for (int i = 0; i < s.getListofcourses().size(); i++) {
+                                                            if (s.getListofcourses().get(i).getCourseName()
+                                                                    .equals(s.getListofcourses().get(response)
+                                                                            .getCourseName())) {
+                                                                j = i;
+                                                            }
+                                                        }
+                                                        break;
+                                                    }
+                                                } catch (InputMismatchException e) {
+                                                    System.out.println("Please enter a valid number.");
+                                                    scan.nextLine();
+                                                }
+                                            }
+                                        } while (true);
+
+
+                                        if (b == 0) {
+                                        do {
+                                            System.out.println("What do you want to do?");
+                                            System.out.println("Create a quiz (1)");
+                                            System.out.println("View a quiz (2)");
+                                            System.out.println("Edit a quiz (3)");
+                                            System.out.println("Delete a quiz (4)");
+                                            System.out.println("Grade student's submissions (5)");//todo
+                                            System.out.println("Go back (6)");
+                                            String quizResponse = scan.nextLine();
+
+                                            if (quizResponse.equals("1")) {
+                                                ServerSocket ss = openServerSocketInClient();
+                                                q.createQuiz(scan);
+                                                s.createQuizInServer(ss,s.getListofcourses().get(j));
+                                                closeServerSocketInClient(ss);
+                                            } else if (quizResponse.equals("2")) {
+                                                q.viewQuiz(s.getListofcourses(), j, scan);
+                                            } else if (quizResponse.equals("3")) {
+                                                //get specific quiz
+                                                if (s.getListofcourses().get(j).getListofquizzes().size() == 0) {
+                                                    System.out.println("No quizzes have been created.");
+                                                } else {
+                                                    int modifyResponse;
+                                                    Questions question;
+                                                    do {
+                                                        System.out.println("Which quiz do you want to edit?");
+                                                        for (int i = 0; i < s.getListofcourses().get(j).getListofquizzes().size(); i++) {
+                                                            System.out.println((i + 1) + ". " + s.getListofcourses().get(j).getListofquizzes().get(i));
+                                                        }
+                                                        try {
+                                                            modifyResponse = scan.nextInt() - 1;
+                                                            scan.nextLine();
+                                                            if ((modifyResponse >= s.getListofcourses().get(j).getListofquizzes().size() || modifyResponse < 0)) {
+                                                                System.out.println("Please enter a valid option.");
+                                                            } else {
+                                                                break;
+                                                            }
+                                                        } catch (InputMismatchException e) {
+                                                            System.out.println("Please enter a valid number.");
+                                                            scan.nextLine();
+                                                        }
+                                                    } while (true);
+
+                                                    do {
+                                                        try {
+                                                            System.out.println("What do you want to do?");
+                                                            System.out.println("Add a question (1)");
+                                                            System.out.println("Edit a question (2)");
+                                                            System.out.println("Delete a question (3)");
+                                                            System.out.println("Go back (4)");
+                                                            String modifyQuestionResponse = scan.nextLine();
+                                                            if (modifyQuestionResponse.equals("1")) {
+                                                                ServerSocket ss = openServerSocketInClient();
+                                                                System.out.printf("Enter the question statement:%n");
+                                                                String questionStatement = scan.nextLine();
+                                                                sendToServerFromClient(questionStatement);
+                                                                System.out.printf("Enter the correct answer:%n");
+                                                                String correctAnswer = scan.nextLine();
+                                                                sendToServerFromClient(correctAnswer);
+                                                                System.out.println("Enter an incorrect answer:");
+                                                                String incorrectChoice1 = scan.nextLine();
+                                                                sendToServerFromClient(incorrectChoice1);
+                                                                System.out.println("Enter an incorrect answer:");
+                                                                String incorrectChoice2 = scan.nextLine();
+                                                                sendToServerFromClient(incorrectChoice2);
+                                                                System.out.println("Enter an incorrect answer:");
+                                                                String incorrectChoice3 = scan.nextLine();
+                                                                sendToServerFromClient(incorrectChoice3);
+                                                                System.out.println("Successfully added!");
+                                                                System.out.println();
+                                                                s.addAQuestionInServer(ss,j,modifyResponse);
+                                                                closeServerSocketInClient(ss);
+                                                            } else if (modifyQuestionResponse.equals("2")) {
+                                                                System.out.println("What question number do you want to change?");
+                                                                int questionNumber = scan.nextInt() - 1;
+                                                                scan.nextLine();
+                                                                if ((questionNumber >= s.getListofcourses().get(j)
+                                                                        .getListofquizzes().get(modifyResponse).getQuiz().size()
+                                                                        || questionNumber < 0)) {
+                                                                    System.out.println("Please enter a valid question number.");
+                                                                } else {
+                                                                    ServerSocket ss = openServerSocketInClient();
+                                                                    System.out.printf("Enter the question statement:%n");
+                                                                    String questionStatement = scan.nextLine();
+                                                                    sendToServerFromClient(questionStatement);
+                                                                    System.out.printf("Enter the correct answer:%n");
+                                                                    String correctAnswer = scan.nextLine();
+                                                                    sendToServerFromClient(correctAnswer);
+                                                                    System.out.println("Enter an incorrect answer:");
+                                                                    String incorrectChoice1 = scan.nextLine();
+                                                                    sendToServerFromClient(incorrectChoice1);
+                                                                    System.out.println("Enter an incorrect answer:");
+                                                                    String incorrectChoice2 = scan.nextLine();
+                                                                    sendToServerFromClient(incorrectChoice2);
+                                                                    System.out.println("Enter an incorrect answer:");
+                                                                    String incorrectChoice3 = scan.nextLine();
+                                                                    sendToServerFromClient(incorrectChoice3);
+                                                                    s.changeAQuestionInServer(ss,j,modifyResponse,questionNumber);
+                                                                    closeServerSocketInClient(ss);
+                                                                }
+                                                            } else if (modifyQuestionResponse.equals("3")) {
+                                                                System.out.println("What question number do you want to delete?");
+                                                                int questionNumber = scan.nextInt() - 1;
+                                                                scan.nextLine();
+                                                                if ((questionNumber >= s.getListofcourses().get(j).getListofquizzes()
+                                                                        .get(modifyResponse).getQuiz().size()
+                                                                        || questionNumber < 0)) {
+                                                                    System.out.println("Please enter a valid question number.");
+                                                                } else {
+                                                                    ServerSocket ss = openServerSocketInClient();
+                                                                    sendToServerFromClient(String.valueOf(questionNumber));
+                                                                    s.deleteAQuestionInServer(ss, j, modifyResponse);
+                                                                    closeServerSocketInClient(ss);
+                                                                    System.out.println("Successfully deleted!");
+                                                                    System.out.println();
+                                                                }
+                                                            } else if (modifyQuestionResponse.equals("4")) {
+                                                                break;
+                                                            } else {
+                                                                System.out.println("Please enter a valid option.");
+                                                            }
+                                                        } catch (InputMismatchException e) {
+                                                            System.out.println("Please enter a number.");
+                                                            scan.nextLine();
+                                                        }
+                                                    } while (true);
+                                                }
+                                            } else if (quizResponse.equals("4")) {
+                                                ServerSocket ss = openServerSocketInClient();
+                                                q.deleteQuiz(s.getListofcourses(), j, scan);
+                                                s.deleteAQuizInServer(ss,j);
+                                                closeServerSocketInClient(ss);
+                                            } else if (quizResponse.equals("5")) {
+
+                                                int viewResponse = 0;
+                                                int gradeResponse = 0;
+                                                boolean o = true;
+                                                boolean dontrunagain = true;
+                                                do {
+                                                    if (s.getListofcourses().get(j).getListofquizzes().size() == 0) {
+                                                        System.out.println("No quizzes have been created.");
+                                                        o = false;
+                                                        break;
+                                                    } else {
+                                                        System.out.println("Which quiz do you want to grade?");
+                                                        for (int i = 0; i < s.getListofcourses().get(j).getListofquizzes().size(); i++) {
+                                                            System.out.println((i + 1) + ". " + s.getListofcourses().get(j).getListofquizzes().get(i));
+                                                        }
+                                                        try {
+                                                            viewResponse = scan.nextInt() - 1;
+                                                            scan.nextLine();
+                                                            if ((viewResponse >= s.getListofcourses().get(j).getListofquizzes().size() || viewResponse < 0)) {
+                                                                System.out.println("Please enter a valid option.");
+                                                            } else {
+                                                                break;
+                                                            }
+                                                        } catch (InputMismatchException e) {
+                                                            System.out.println("Please enter a valid number.");
+                                                            scan.nextLine();
+                                                        }
+                                                    }
+                                                } while (true);
+                                                if (o && dontrunagain) {
+                                                    String inputtedQuizTitle = s.getListofcourses().get(j).getListofquizzes().get(viewResponse).getQuizTitle();
+                                                    try (BufferedReader br = new BufferedReader(new FileReader("src/Submissions.txt"))) {
+                                                        while (true) {
+                                                            String line = "";
+                                                            line = br.readLine();
+                                                            if (line == null) {
+                                                                break;
+                                                            }
+                                                            String actualQuizTitle = line.substring(line.indexOf("111") + 3, line.indexOf("223"));
+                                                            String usertakenquiz = "";
+                                                            if (inputtedQuizTitle.equals(actualQuizTitle)) {
+                                                                usertakenquiz = line.substring(line.indexOf("223") + 3, line.indexOf("333"));
+                                                                s.getListofuserstakenaquiz().add(usertakenquiz);
+                                                            }
+                                                        }
+                                                        dontrunagain = false;
+
+                                                    } catch (FileNotFoundException e) {
+                                                        e.printStackTrace();
+                                                    } catch (IOException e) {
+                                                        e.printStackTrace();
+                                                    }
+                                                    do {
+                                                        if (s.getListofuserstakenaquiz().size() == 0) {
+                                                            System.out.println("No users have taken the quiz.");
+                                                            o = false;
+                                                            break;
+                                                        } else {
+                                                            System.out.println("Which user's quiz do you want to grade?");
+                                                            for (int i = 0; i < s.getListofuserstakenaquiz().size(); i++) {
+                                                                System.out.println((i + 1) + ". " + s.getListofuserstakenaquiz().get(i));
+                                                            }
+                                                            try {
+                                                                gradeResponse = scan.nextInt() - 1;
+                                                                scan.nextLine();
+                                                                if ((gradeResponse >= s.getListofuserstakenaquiz().size() || gradeResponse < 0)) {
+                                                                    System.out.println("Please enter a valid option.");
+                                                                } else {
+                                                                    break;
+                                                                }
+                                                            } catch (InputMismatchException e) {
+                                                                System.out.println("Please enter a valid number.");
+                                                                scan.nextLine();
+                                                            }
+                                                        }
+                                                    } while (true);
+
+                                                    if (o) {
+                                                        int grade = 0;
+                                                        int numberofquestions = 0;
+                                                        try(BufferedReader br = new BufferedReader(new FileReader("src/Submissions.txt"))) {
+                                                            String line = "";
+                                                            while (true) {
+                                                                int z = 0;
+                                                                line = br.readLine();
+                                                                if (line == null) {
+                                                                    return;
+                                                                }
+                                                                int count = 0;
+                                                                for (int i = 0; i < line.length(); i++) {
+                                                                    if (line.charAt(i) == '$') {
+                                                                        count++;
+                                                                    }
+                                                                }
+                                                                int temp = 0;
+                                                                for (int i = 0; i < count - 1; i++) {
+                                                                    ServerSocket ss = openServerSocketInClient();
+                                                                    if (!line.contains(s.getListofuserstakenaquiz().get(gradeResponse))
+                                                                            || !line.contains(s.getListofcourses().get(j)
+                                                                            .getListofquizzes().get(viewResponse).getQuizTitle())) {
+                                                                        z = 1;
+                                                                        break;
+                                                                    }
+                                                                    String gradedQuestion = "";
+                                                                    gradedQuestion += s.getListofcourses().get(j).getListofquizzes()
+                                                                            .get(viewResponse).getQuizTitle() + "\n";
+                                                                    sendToServerFromClient(s.getListofcourses().get(j).getListofquizzes()
+                                                                            .get(viewResponse).getQuizTitle());
+                                                                    gradedQuestion += s.getListofuserstakenaquiz().get(gradeResponse);
+                                                                    sendToServerFromClient(s.getListofuserstakenaquiz().get(gradeResponse));
+                                                                    temp = line.indexOf("$", temp) + 1;
+                                                                    String questionStatement = line.substring(temp, line.indexOf("?", temp) + 1);
+                                                                    temp = line.indexOf("?", temp) + 1;
+                                                                    String studentAnswer = line.substring(temp,
+                                                                            line.indexOf(("" + (4 + i) + (4 + i) + (4 + i)), temp));
+                                                                    temp = line.indexOf("" + (4 + i) + (4 + i) + (4 + i), temp);
+                                                                    gradedQuestion += "\n" + (i + 1) + ". " + questionStatement + "\nAnswer: " + studentAnswer;
+                                                                    sendToServerFromClient((i + 1) + ". " + questionStatement);
+                                                                    sendToServerFromClient("Answer: " + studentAnswer);
+                                                                    System.out.println(gradedQuestion);
+                                                                    while (true) {
+                                                                        System.out.println("Is this answer correct? (yes or no)");
+                                                                        String rightAnswer = scan.nextLine();
+                                                                        if (!rightAnswer.equals("yes") && !rightAnswer.equals("no")) {
+                                                                            System.out.println("Please enter a valid option.");
+                                                                        } else {
+                                                                            if (rightAnswer.equals("yes")) {
+                                                                                sendToServerFromClient("1/1");
+                                                                                grade++;
+                                                                            } else {
+                                                                                sendToServerFromClient("0/1");
+                                                                            }
+                                                                            numberofquestions++;
+                                                                            break;
+                                                                        }
+                                                                    }
+                                                                    sendToServerFromClient(grade + "/" + numberofquestions);
+                                                                    System.out.println();
+                                                                    s.gradeQuizInServer(ss);
+                                                                    closeServerSocketInClient(ss);
+                                                                }
+                                                                if (z == 0) {
+                                                                    break;
+                                                                }
+                                                            }
+                                                        } catch (FileNotFoundException e) {
+                                                            e.printStackTrace();
+                                                        } catch (IOException e) {
+                                                            e.printStackTrace();
+                                                        }
+                                                    }
+                                                }
+                                                {
+                                                    System.out.println("Grading submitted!");
+                                                    s.clearListOfUsers();
+                                                }
+                                            } else if (quizResponse.equals("6")) {
+                                                break;
+                                            } else {
+                                                System.out.println("Please enter a valid option.");
+                                            }
+                                        } while (true);
+                                        }
+                                    } else if (teacherchoice.equals("3")) {
+                                        do {
+                                            System.out.println("Account Settings:");
+                                            System.out.println("Modify account (1)");
+                                            System.out.println("Delete account (2)");
+                                            System.out.println("Log out (3)");
+                                            System.out.println("Go back (4)");
+                                            teacheraccountchoice = scan.nextLine();
+                                            if (teacheraccountchoice.equals("1")) {
+                                                System.out.println();
+                                                ServerSocket ss = openServerSocketInClient();
+                                                a.modifyAccount(signinusername, signinpassword, scan);
+                                                s.modifyAccountInServer(ss);
+                                                closeServerSocketInClient(ss);
+                                                System.out.println();
+                                                System.out.println("You have been logged out of your old account.");
+                                                System.out.println();
+                                                x = 1;
+                                                y = 1;
+                                                break;
+                                            } else if (teacheraccountchoice.equals("2")) {
+                                                ServerSocket ss = openServerSocketInClient(); //open new ServerSocket
+                                                a.deleteAccount(signinusername, signinpassword);
+                                                s.deleteAccountInServer(ss);
+                                                closeServerSocketInClient(ss); //close ServerSocket
+                                                System.out.println();
+                                                System.out.println("You have been logged out.");
+                                                System.out.println();
+                                                x = 1;
+                                                y = 1;
+                                                break;
+                                            } else if (teacheraccountchoice.equals("3")) {
+                                                System.out.println();
+                                                System.out.println("You have been logged out.");
+                                                System.out.println();
+                                                x = 1;
+                                                y = 1;
+                                                break;
+                                            } else if (teacheraccountchoice.equals("4")) {
+                                                break;
+                                            } else {
+                                                System.out.println("Please enter a valid choice.");
+                                            }
+                                        } while (true);
+                                    } else {
+                                        System.out.println("Please enter a valid choice.");
+                                    }
+                                } while (y == 0);
+                            }
+
+                        }
+
+                    } while (x == 0) ;
+                } else if (answermainmenu.equals("2")) {
+                    ServerSocket ss = openServerSocketInClient(); //open new ServerSocket
+                    a.createAccount(s.getDatabase(), scan);
+                    s.createAccountInServer(ss);
+                    closeServerSocketInClient(ss); //close ServerSocket
+                } else if (answermainmenu.equals("3")) {
+                    break;
+                } else {
+                    System.out.println("Please enter a valid option.");
+                }
+
+            }
+            System.out.println("Thank you for using our program!");
+        }
+    }
+
