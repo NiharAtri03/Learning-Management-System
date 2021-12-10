@@ -1,0 +1,185 @@
+import javafx.scene.layout.Border;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.net.ServerSocket;
+import java.util.Random;
+
+public class InitialMenu extends JComponent {
+    JFrame frame1 = new JFrame("Main Menu");
+    JFrame frame2 = new JFrame("Sign Up");
+    JButton login;
+    JButton signup;
+    JButton enter;
+    JLabel nameLabel;
+    JLabel ageLabel;
+    JLabel roleLabel;
+    JLabel usernameLabel;
+    JLabel passwordLabel;
+    JTextField name;
+    JTextField age;
+    JTextField role;
+    JTextField username;
+    JTextField password;
+    Server1 s = new Server1();
+    NetworkMethods n = new NetworkMethods();
+    //action listener for buttons
+    ActionListener actionListener = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (e.getSource() == login) {
+                login();
+            }
+            if (e.getSource() == signup) {
+                signup();
+            }
+            //if (e.getSource() == enter){
+                //enter();
+            //}
+        }
+    };
+
+    public void login() {
+        if (s.isInvalidAccount(username.getText(), password.getText())) {
+            JOptionPane.showMessageDialog(null, "This account doesn't exist.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        } else {
+            //implement later
+            frame1.setVisible(false);
+            JOptionPane.showMessageDialog(null, "SSuccessfully logged in.", "Success",
+                    JOptionPane.INFORMATION_MESSAGE);
+            JPanel panel1 = new JPanel();
+            Container content = frame2.getContentPane();
+            content.setLayout(new BorderLayout());
+            //panel1.add();
+            content.add(panel1, BorderLayout.CENTER);
+        }
+    }
+
+    public void signup() {
+        name=new JTextField(20);
+        role=new JTextField(20);
+        age=new JTextField(20);
+        username=new JTextField(20);
+        password=new JTextField(20);
+        name.setText("");
+        role.setText("");
+        age.setText("");
+        username.setText("");
+        password.setText("");
+        nameLabel = new JLabel("Enter name");
+        ageLabel = new JLabel("Enter age");
+        roleLabel = new JLabel("Enter role");
+        usernameLabel = new JLabel("Enter username");
+        passwordLabel = new JLabel("Enter password");
+        enter = new JButton("Enter");
+        frame1.setVisible(false);
+        frame2.setVisible(true);
+        JPanel panelButton = new JPanel();
+        JPanel panelTextFields = new JPanel(new GridLayout(5,2,-255,10));
+        Container content = frame2.getContentPane();
+        panelTextFields.add(nameLabel);
+        panelTextFields.add(name);
+        panelTextFields.add(roleLabel);
+        panelTextFields.add(role);
+        panelTextFields.add(ageLabel);
+        panelTextFields.add(age);
+        panelTextFields.add(usernameLabel);
+        panelTextFields.add(username);
+        panelTextFields.add(passwordLabel);
+        panelTextFields.add(password);
+        content.add(panelTextFields, BorderLayout.NORTH);
+        //enter.addActionListener(actionListener);
+        enter.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                enter();
+            }
+        });
+        panelButton.add(enter);
+        content.add(panelButton,BorderLayout.CENTER);
+    }
+
+    public void enter(){
+        //s.refresh();
+        if(name.getText().equals("")||
+                role.getText().equals("")||
+                age.getText().equals("")||
+                username.getText().equals("")||
+                password.getText().equals("")) {
+            JOptionPane.showMessageDialog(null, "Fields can't be empty.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        } else if(!age.getText().matches("-?\\d+(\\.\\d+)?")) {
+            JOptionPane.showMessageDialog(null, "Age must be an integer.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        } else if (Integer.parseInt(age.getText())<0){
+            JOptionPane.showMessageDialog(null, "Age must be a valid number.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        } else if (s.usernameAlreadyExists(username.getText())){
+            JOptionPane.showMessageDialog(null, "Sorry, this username already exists.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        } else if(!role.getText().equalsIgnoreCase("student")&& !role.getText().equalsIgnoreCase("teacher")) {
+            JOptionPane.showMessageDialog(null, "Only student and teacher are valid roles.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+        else {
+            ServerSocket ss = n.openServerSocket(); //open new ServerSocket
+            frame2.setVisible(false);
+            n.sendToServer(name.getText());
+            n.sendToServer(role.getText());
+            n.sendToServer(age.getText());
+            n.sendToServer(username.getText());
+            n.sendToServer(password.getText());
+            s.createAccountInServer(ss);
+            n.closeServerSocket(ss); //close ServerSocket
+
+            name.setText("");
+            role.setText("");
+            age.setText("");
+            username.setText("");
+            password.setText("");
+            JOptionPane.showMessageDialog(null, "Account successfully created!", "Success",
+                    JOptionPane.INFORMATION_MESSAGE);
+            createMainMenu();
+        }
+    }
+
+
+
+    public void createMainMenu(){
+        username=new JTextField("",20);
+        password=new JTextField("",20);
+        usernameLabel = new JLabel("Enter username");
+        passwordLabel = new JLabel("Enter password");
+        JPanel panelButton = new JPanel();  // panel of buttons
+        JPanel panelTextFields = new JPanel(new GridLayout(2,2,-255,10));
+        Container content = frame1.getContentPane();
+        login.addActionListener(actionListener);
+        panelButton.add(login);
+        signup.addActionListener(actionListener);
+        panelButton.add(signup);
+        content.add(panelButton, BorderLayout.CENTER);
+        panelTextFields.add(usernameLabel);
+        panelTextFields.add(username);
+        panelTextFields.add(passwordLabel);
+        panelTextFields.add(password);
+        content.add(panelTextFields,BorderLayout.NORTH);
+        frame1.setVisible(true);
+    }
+    public InitialMenu() {
+        signup = new JButton("Sign Up");
+        login = new JButton("Log In");
+        frame1.setResizable(false);
+        frame2.setResizable(false);
+        frame1.setSize(500,500);
+        frame2.setSize(500,500);
+        frame1.setLocationRelativeTo(null);
+        frame2.setLocationRelativeTo(null);
+        frame1.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame2.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    }
+
+
+
+}
