@@ -1,0 +1,16 @@
+import javax.swing.*;
+
+public class Main implements Runnable  {
+
+    public static Main main = new Main();
+    private InitialMenu im = new InitialMenu();
+    public void run(){
+        im.createMainMenu();
+
+    }
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(main);
+
+        //thread stuff here
+    }
+}
