@@ -1,0 +1,106 @@
+import java.util.ArrayList;
+
+/**
+ * Creates and stores question statements and MCQ options.
+ *
+ * <p>Purdue University -- CS18000 -- Fall 2021</p>
+ *
+ * @author Kriish Rohit, Nihar Atri, Annaahat Lilly, Binghang Lu
+ * @version November 15, 2021
+ */
+
+
+public class Questions {
+    private String questionStatement;
+    private String correctAnswer;
+    private String wrongOptionOne;
+    private String wrongOptionTwo;
+    private String wrongOptionThree;
+
+
+    public Questions(String questionStatement, String correctAnswer, String wrongOptionOne,
+                     String wrongOptionTwo, String wrongOptionsThree) {
+        this.questionStatement = questionStatement;
+        this.correctAnswer = correctAnswer;
+        this.wrongOptionOne = wrongOptionOne;
+        this.wrongOptionTwo = wrongOptionTwo;
+        this.wrongOptionThree = wrongOptionsThree;
+    }
+
+    public Questions() {
+    }
+
+    public String getWrongOptionOne() {
+        return wrongOptionOne;
+    }
+
+    public void setWrongOptionOne(String wrongOptionOne) {
+        this.wrongOptionOne = wrongOptionOne;
+    }
+
+    public String getWrongOptionTwo() {
+        return wrongOptionTwo;
+    }
+
+    public void setWrongOptionTwo(String wrongOptionTwo) {
+        this.wrongOptionTwo = wrongOptionTwo;
+    }
+
+    public String getWrongOptionThree() {
+        return wrongOptionThree;
+    }
+
+    public void setWrongOptionThree(String wrongOptionThree) {
+        this.wrongOptionThree = wrongOptionThree;
+    }
+
+
+    public String getQuestionStatement() {
+        return questionStatement;
+    }
+
+    public void setQuestionStatement(String questionStatement) {
+        this.questionStatement = questionStatement;
+    }
+
+    public String getCorrectAnswer() {
+        return correctAnswer;
+    }
+
+    public void setCorrectAnswer(String correctAnswer) {
+        this.correctAnswer = correctAnswer;
+    }
+
+    public String generateQuestionFormat() {
+        return ". " + questionStatement + "\na. " + correctAnswer + "\nb. "
+                + wrongOptionOne + "\nc. " + wrongOptionTwo + "\nd. " + wrongOptionThree;
+    }
+
+    public String toString(String randomchoice) {
+        if (randomchoice.equals("yes")) {
+            int x = (int) (Math.random() * 4);
+            if (x == 0) {
+                return ". " + questionStatement + "\na. " +
+                        correctAnswer + "\nb. " + wrongOptionOne + "\nc. "
+                        + wrongOptionTwo + "\nd. " + wrongOptionThree;
+            } else if (x == 1) {
+                return ". " + questionStatement + "\na. "
+                        + wrongOptionOne + "\nb. " + correctAnswer
+                        + "\nc. " + wrongOptionTwo + "\nd. " + wrongOptionThree;
+            } else if (x == 2) {
+                return ". " + questionStatement + "\na. "
+                        + wrongOptionOne + "\nb. " + wrongOptionTwo
+                        + "\nc. " + correctAnswer + "\nd. " + wrongOptionThree;
+            } else {
+                return ". " + questionStatement + "\na. "
+                        + wrongOptionOne + "\nb. " + wrongOptionTwo
+                        + "\nc. " + wrongOptionThree + "\nd. " + correctAnswer;
+            }
+        } else {
+            return ". " + questionStatement + "\na. " +
+                    correctAnswer + "\nb. " + wrongOptionOne
+                    + "\nc. " + wrongOptionTwo + "\nd. " + wrongOptionThree;
+        }
+
+    }
+}
