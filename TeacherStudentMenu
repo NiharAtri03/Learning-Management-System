@@ -1,111 +1,139 @@
 import javax.swing.*;
 import java.awt.event.*;
 import java.awt.*;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 
+//get signinusername + signinpassword + specific course here
 public class TeacherStudentMenu extends JComponent {
     Course c = new Course();
     Server1 s = new Server1();
-    JFrame fr1 = new JFrame("Create course");
-    JFrame fr2 = new JFrame();
-    JFrame fr3 = new JFrame("Choose course");
-    JTextField courseChooseField;
-    JTextField courseCreateField;
+    JFrame fr1 = new JFrame("Course Editor");
+    JFrame fr2 = new JFrame("Course List");
+    JFrame fr3 = new JFrame("Main Menu");
     JButton courseCreate;
-    JButton courseChoose;
-    JButton addCourseYes;
-    JButton addCourseNo;
+    JButton viewAllCourses;
+    JButton viewAccountSettings;
     JLabel courseCreateLabel;
-    JLabel addCourseLabel;
-    JLabel courseChooseLabel;
-    JLabel courseList;
+    NetworkMethods n = new NetworkMethods();
 
-    public void courseCreate() {
-        JPanel panel1 = new JPanel(new GridLayout(1, 2));
+    public void courseCreate(String signInUsername, String signInPassword) {
+        fr3.setVisible(false);
+        JPanel panel1 = new JPanel(new GridLayout(1, 2,-255,10));
+        JPanel panel2 = new JPanel();
         Container container = fr1.getContentPane();
-        courseCreateLabel = new JLabel("What is the name of this course?");
-        courseChooseField = new JTextField();
-        courseChooseField.setText("");
-        courseCreate = new JButton("Next");
+        courseCreateLabel = new JLabel("Course Name:");
+        JTextField courseName = new JTextField("",20);
         panel1.add(courseCreateLabel);
-        panel1.add(courseCreateField);
-        panel1.add(courseCreate);
+        panel1.add(courseName);
         container.add(panel1, BorderLayout.NORTH);
+        JButton enter = new JButton("Enter");
+        enter.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                enter(courseName, signInUsername, signInPassword);
+            }
+        });
+        panel2.add(enter);
+        container.add(panel2, BorderLayout.CENTER);
+        fr1.setVisible(true);
 
-        if () {
+        /*if () {
             //if user logs in as student
             fr1.setVisible(false);
         } else if () {
             //if user logs in as teacher
             fr1.setVisible(true);
         }
-
         courseCreate.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 courseCreate2();
             }
-        });
+        });*/
     }
 
-    public void courseCreate2() {
-        JPanel panel2 = new JPanel(new GridLayout(1, 3));
-        Container container2 = fr2.getContentPane();
-        addCourseLabel = new JLabel("Do you want to create another course?");
-        addCourseYes = new JButton("Yes");
-        addCourseNo = new JButton("No");
-        panel2.add(addCourseLabel);
-        panel2.add(addCourseYes);
-        panel2.add(addCourseNo);
-        container2.add(panel2, BorderLayout.NORTH);
-        fr2.setVisible(true);
-
-        addCourseYes.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                courseCreate();
-            }
-        });
-
-        addCourseNo.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                //Where to redirect if user clicks No
-            }
-        });
+    public void enter(JTextField courseName, String signInUsername, String signInPassword){
+        ServerSocket ss = n.openServerSocket();
+        n.sendToServer(courseName.getText());
+        s.createCourseInServer(ss);
+        n.closeServerSocket(ss);
+        fr1.setVisible(false);
+        courseName.setText("");
+        JOptionPane.showMessageDialog(null, "Course successfully created!", "Success",
+                JOptionPane.INFORMATION_MESSAGE);
+        createCourseMenu(signInUsername,signInPassword);
     }
 
-    public void courseChoose() {
-        JPanel panel3 = new JPanel();
-        JPanel panelCourse = new JPanel(new GridLayout(1, 2));
-        Container container3 = fr3.getContentPane();
+    public void getSpecificCourse(int specificCourse, String signinusername, String signinpassword){
+        if(s.isStudent(signinusername,signinpassword)){
+            fr2.setVisible(false);
+            StudentMenu sm = new StudentMenu();
+            sm.createStudentMenu(specificCourse, signinusername, signinpassword);
+        } else {
+            fr2.setVisible(false);
+            TeacherMenu tm = new TeacherMenu();
+            tm.createTeacherMenu(specificCourse, signinusername, signinpassword);
+        }
+    }
 
-        courseChooseLabel = new JLabel("Choose a course.");
-        courseChoose = new JButton("Next");
-
-        if (s.getListofcourses().size() == 0) {
+    public void viewAllCourses(String signinusername, String signinpassword){
+        if(s.getListofcourses().size()==0){
             JOptionPane.showMessageDialog(null, "No courses exist.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-
-        else {
-            panel3.add(courseChooseLabel);
-            for (int i = 1; i < s.getListofcourses().size(); i++) {
-                courseList = new JLabel((i + 1) + ". " + s.getListofcourses().get(i).getCourseName());
+        } else {
+            fr3.setVisible(false);
+            JPanel panelButton = new JPanel();
+            Container content = fr2.getContentPane();
+            //ArrayList<JButton> listOfCourseButtons = new ArrayList<>();
+            for (int i = 0; i < s.getListofcourses().size(); i++) {
+                JButton button = new JButton(s.getListofcourses().get(i).getCourseName());
+                int finalI = i;
+                button.addActionListener(e -> getSpecificCourse(finalI, signinusername, signinpassword));
+                //listOfCourseButtons.add(button);
+                panelButton.add(button);
             }
-            panelCourse.add(courseList);
-            courseChooseField = new JTextField();
-            panelCourse.add(courseChooseField);
-            panelCourse.add(courseChoose);
-            container3.add(panelCourse, BorderLayout.NORTH);
-            fr3.setVisible(true);
-
-            courseChoose.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    //Quiz menu
-                }
-            });
+            content.add(panelButton, BorderLayout.CENTER);
+            fr2.setVisible(true);
         }
     }
-}
 
+    public void viewAccountSettings(String signInUsername, String signInPassword){
+        AccountSettings am = new AccountSettings();
+        fr3.setVisible(false);
+        am.createAccountSettings(signInUsername, signInPassword);
+    }
+
+    public void createCourseMenu(String signInUsername, String signInPassword) {
+        JPanel panel3 = new JPanel();
+        Container container3 = fr3.getContentPane();
+        if(!s.isStudent(signInUsername, signInPassword)){
+            courseCreate = new JButton("Create A Course");
+            courseCreate.addActionListener(e -> courseCreate(signInUsername,signInPassword));
+            panel3.add(courseCreate);
+        }
+        viewAllCourses = new JButton("View All Courses");
+        viewAccountSettings = new JButton("View Account Settings");
+        viewAllCourses.addActionListener(e -> viewAllCourses(signInUsername, signInPassword));
+        viewAccountSettings.addActionListener(e -> viewAccountSettings(signInUsername,signInPassword));
+        panel3.add(viewAllCourses);
+        panel3.add(viewAccountSettings);
+        container3.add(panel3,BorderLayout.CENTER);
+        fr3.setVisible(true);
+    }
+    public CourseMenu(){
+        fr1.setResizable(false);
+        fr2.setResizable(false);
+        fr3.setResizable(false);
+        fr1.setSize(500,500);
+        fr2.setSize(500,500);
+        fr3.setSize(500,500);
+        fr1.setLocationRelativeTo(null);
+        fr2.setLocationRelativeTo(null);
+        fr3.setLocationRelativeTo(null);
+        fr1.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        fr2.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        fr3.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    }
+
+
+}
