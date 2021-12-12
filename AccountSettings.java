@@ -40,6 +40,9 @@ public class AccountSettings extends JComponent {
     public void delete() {
         frameA1.setVisible(false);
         frameA2.setVisible(false);//here
+        ServerSocket ss = n.openServerSocket(); //open new ServerSocket
+        s.deleteAccountInServer(ss); // check
+        n.closeServerSocket(ss); //close ServerSocket
         a.deleteAccount(a.getUsername(), a.getPassword()); // check
         JOptionPane.showMessageDialog(null, "Account Deleted", "Attention!",
                 JOptionPane.INFORMATION_MESSAGE);
